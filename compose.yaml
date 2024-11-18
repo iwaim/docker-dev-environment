@@ -1,0 +1,109 @@
+name: dev_environment
+
+services:
+  milkode:
+    hostname: milkode.test
+    tty: true
+    build:
+      context: containers/milkode
+      dockerfile: Dockerfile
+      args:
+        - USER_ID=${USER_ID}
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
+        - USER_SHELL=${USER_SHELL}
+    volumes:
+      - type: bind
+        source: ${MILKODE_TERGET_DIR}
+        target: /repos
+      - type: volume
+        source: home-data
+        target: /home
+    user: ${USER_ID}
+    ports:
+      - 9292:9292
+    entrypoint: ["/entrypoint.sh"]
+
+  dev:
+    hostname: dev.test
+    tty: true
+    build:
+      context: containers/dev
+      dockerfile: Dockerfile
+      args:
+        - USER_ID=${USER_ID}
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
+        - USER_SHELL=${USER_SHELL}
+    volumes:
+      - type: volume
+        source: home-data
+        target: /home
+    user: ${USER_ID}
+    entrypoint:  ["/bin/bash"]
+
+  php:
+    hostname: php.test
+    tty: true
+    build:
+      context: containers/php
+      dockerfile: Dockerfile
+      args:
+        - USER_ID=${USER_ID}
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
+        - USER_SHELL=${USER_SHELL}
+        - PHP_VERSION=${PHP_VERSION}
+    volumes:
+      - type: volume
+        source: home-data
+        target: /home
+    user: ${USER_ID}
+    entrypoint:  ["/bin/bash"]
+
+  sury:
+    hostname: sury.test
+    build:
+      context: containers/sury
+      dockerfile: Dockerfile
+
+  debian:
+    hostname: debian.test
+    build:
+      context: containers/debian
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ}
+
+  fedora:
+    hostname: fedora.test
+    build:
+      context: containers/fedora
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ}
+
+  mariadb:
+    hostname: mariadb.test
+    build:
+      context: containers/mariadb
+      dockerfile: Dockerfile
+      args:
+        - MARIADB_VERSION=${MARIADB_VERSION}
+        - mariadb-data:/var/lib/mysql
+        - TZ=${TZ}
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+    volumes:
+      - type: bind
+        source: ./containers/mariadb/docker-entrypoint-initdb.d
+        target: /docker-entrypoint-initdb.d
+      - type: volume
+        source: mariadb-data
+        target: /var/lib/mysql
+
+volumes:
+  home-data:
+    driver: local
+  mariadb-data:
+    driver: local
